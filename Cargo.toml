@@ -1,0 +1,41 @@
+[package]
+name = "jarvis"
+version = "0.1.0"
+edition = "2021"
+authors = ["Jarvis Bot Team"]
+description = "Discord bot with Join-to-Create voice channels, spam detection, and stats tracking"
+
+[dependencies]
+# Discord
+serenity = { version = "0.12", features = ["client", "gateway", "rustls_backend", "model", "voice"] }
+poise = "0.6"
+
+# Async runtime
+tokio = { version = "1", features = ["full"] }
+
+# Database
+sqlx = { version = "0.8", features = ["runtime-tokio", "postgres", "uuid", "chrono"] }
+
+# Configuration
+dotenvy = "0.15"
+
+# Serialization
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# Utilities
+uuid = { version = "1", features = ["v4"] }
+chrono = { version = "0.4", features = ["serde"] }
+dashmap = "6"
+thiserror = "2"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+once_cell = "1"
+
+# Chart generation
+plotters = "0.3"
+plotters-backend = "0.3"
+image = "0.25"
+
+[dev-dependencies]
+tokio-test = "0.4"
