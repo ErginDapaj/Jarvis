@@ -15,7 +15,7 @@ pub async fn event_handler(
 ) -> Result<(), Error> {
     match event {
         FullEvent::Ready { data_about_bot, .. } => {
-            info!("Bot ready as {}", data_about_bot.user.name);
+            info!("Master the bot is ready as {}", data_about_bot.user.name);
         }
 
         FullEvent::VoiceStateUpdate { old, new } => {
