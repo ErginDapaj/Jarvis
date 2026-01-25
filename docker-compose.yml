@@ -27,6 +27,7 @@ services:
       DATABASE_URL: postgres://jarvis:verystrongpassword123@postgres:5432/jarvis
       RUST_LOG: jarvis=info,serenity=warn
       DONATE_LINK: ${DONATE_LINK:-}
+      GUILD_ID: ${GUILD_ID:-}
     restart: unless-stopped
 
 volumes:
