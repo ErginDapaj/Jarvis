@@ -4,7 +4,7 @@ services:
     container_name: jarvis-postgres
     environment:
       POSTGRES_USER: jarvis
-      POSTGRES_PASSWORD: jarvis_password
+      POSTGRES_PASSWORD: verystrongpassword123
       POSTGRES_DB: jarvis
     ports:
       - "5432:5432"
@@ -24,7 +24,7 @@ services:
         condition: service_healthy
     environment:
       DISCORD_TOKEN: ${DISCORD_TOKEN}
-      DATABASE_URL: postgres://jarvis:jarvis_password@postgres:5432/jarvis
+      DATABASE_URL: postgres://jarvis:verystrongpassword123@postgres:5432/jarvis
       RUST_LOG: jarvis=info,serenity=warn
       DONATE_LINK: ${DONATE_LINK:-}
     restart: unless-stopped

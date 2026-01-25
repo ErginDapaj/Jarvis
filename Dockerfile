@@ -3,7 +3,7 @@ FROM rust:1.75-bookworm AS builder
 
 WORKDIR /app
 
-# Install dependencies for sqlx offline mode
+# Install dependencies for sqlx
 RUN apt-get update && apt-get install -y pkg-config libssl-dev && rm -rf /var/lib/apt/lists/*
 
 # Copy manifests
@@ -18,9 +18,10 @@ RUN cargo build --release && rm -rf src
 # Copy source code
 COPY src ./src
 COPY migrations ./migrations
-COPY .sqlx ./.sqlx
 
 # Build the application
+# SQLx will connect to database during build to verify queries
+# Make sure DATABASE_URL is available during build if not using offline mode
 RUN touch src/main.rs && cargo build --release
 
 # Runtime stage
