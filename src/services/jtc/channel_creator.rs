@@ -157,6 +157,16 @@ pub async fn create_channel(
         error!("Failed to move user {} to channel {}: {:?}", user_id, channel.id, e);
     }
 
+    // Set channel status with tags if available
+    if !tags.is_empty() {
+        let status_text = tags.iter().map(|t| format!("`{}`", t)).collect::<Vec<_>>().join(" ");
+        if let Err(e) = channel.id.edit(ctx, EditChannel::new().status(&status_text)).await {
+            debug!("Could not set channel status during creation (may not be available): {:?}", e);
+        } else {
+            info!("Set channel status for {}: {}", channel.id, status_text);
+        }
+    }
+
     // Send welcome embed in the text-in-voice channel
     welcome_embed::send(ctx, data, channel.id, user_id, is_casual).await?;
 
@@ -186,7 +196,7 @@ pub async fn update_channel_topic(
 
 /// Update channel tags
 pub async fn update_channel_tags(
-    _ctx: &Context,
+    ctx: &Context,
     data: &Arc<Data>,
     channel_id: ChannelId,
     tags: Vec<String>,
@@ -194,8 +204,24 @@ pub async fn update_channel_tags(
     // Update database
     voice_channel::update_tags(&data.pool, channel_id.get() as i64, &tags).await?;
 
-    // Could update channel status/topic with tags if desired
-    // For now, tags are just stored in DB
+    // Set tags in channel status if available
+    if !tags.is_empty() {
+        let status_text = tags.iter().map(|t| format!("`{}`", t)).collect::<Vec<_>>().join(" ");
+        
+        // Try to set channel status (activity status)
+        // This may not be available on all Discord servers/plans
+        if let Err(e) = channel_id.edit(ctx, EditChannel::new().status(&status_text)).await {
+            // Status not available or failed - that's okay, just log it
+            tracing::debug!("Could not set channel status (may not be available): {:?}", e);
+        } else {
+            tracing::info!("Set channel status for {}: {}", channel_id, status_text);
+        }
+    } else {
+        // Clear status if no tags
+        if let Err(e) = channel_id.edit(ctx, EditChannel::new().status("")).await {
+            tracing::debug!("Could not clear channel status: {:?}", e);
+        }
+    }
 
     Ok(())
 }

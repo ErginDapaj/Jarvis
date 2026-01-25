@@ -62,7 +62,7 @@ pub async fn send(
     // Add donate button if configured
     if let Some(ref donate_link) = data.settings.donate_link {
         let donate_button = CreateButton::new_link(donate_link)
-            .label("Support Us (Please i need it)");
+            .label("Support Us (Please!!)");
         buttons.push(donate_button);
     }
 
