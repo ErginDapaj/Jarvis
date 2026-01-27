@@ -42,6 +42,22 @@ pub async fn is_banned(
     Ok(row.0 > 0)
 }
 
+pub async fn remove_ban(
+    pool: &PgPool,
+    channel_id: i64,
+    user_id: i64,
+) -> Result<bool, sqlx::Error> {
+    let result = sqlx::query(
+        "DELETE FROM vc_ban_history WHERE channel_id = $1 AND banned_user_id = $2"
+    )
+    .bind(channel_id)
+    .bind(user_id)
+    .execute(pool)
+    .await?;
+
+    Ok(result.rows_affected() > 0)
+}
+
 pub async fn get_bans_for_channel(
     pool: &PgPool,
     channel_id: i64,

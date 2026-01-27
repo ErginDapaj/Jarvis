@@ -12,7 +12,7 @@ use crate::services::moderation::mute_service;
 use crate::services::spam::detector;
 
 /// Delay before unmuting a user after they leave a channel (in seconds)
-const UNMUTE_DELAY_SECONDS: u64 = 5;
+const UNMUTE_DELAY_SECONDS: u64 = 3;
 
 pub async fn handle_voice_state_update(
     ctx: &Context,
@@ -275,9 +275,9 @@ async fn handle_channel_leave(
                 // Delay unmute to allow for channel hopping
                 // If user jumps to another channel where they're also muted, they stay muted
                 let http = ctx.http.clone();
+                let cache = ctx.cache.clone();
                 let pool = data.pool.clone();
                 let data = data.clone();
-                let left_channel_id = channel_id.get() as i64;
 
                 tokio::spawn(async move {
                     tokio::time::sleep(Duration::from_secs(UNMUTE_DELAY_SECONDS)).await;
@@ -305,34 +305,46 @@ async fn handle_channel_leave(
                         return;
                     }
 
-                    // Second check: Does user have an active mute in any OTHER channel?
-                    let has_other_mute = match mute::has_active_mute_in_guild_except(
-                        &pool,
-                        guild_id.get() as i64,
-                        user_id.get() as i64,
-                        left_channel_id,
-                    )
-                    .await
-                    {
-                        Ok(has_mute) => has_mute,
-                        Err(e) => {
-                            error!("Failed to check for other mutes: {:?}", e);
-                            false // Unmute on error to be safe
-                        }
-                    };
+                    // Second check: Did user hop to a channel where they're muted?
+                    // Get their CURRENT voice channel (after the delay)
+                    let current_channel = cache
+                        .guild(guild_id)
+                        .and_then(|g| g.voice_states.get(&user_id).and_then(|vs| vs.channel_id));
 
-                    if has_other_mute {
-                        debug!(
-                            "User {} has active mute in another channel, keeping muted",
-                            user_id
-                        );
-                        return;
+                    if let Some(current_channel_id) = current_channel {
+                        // User is in a channel - check if they have a mute for THIS specific channel
+                        let is_muted_in_current = match mute::get_active_mute(
+                            &pool,
+                            current_channel_id.get() as i64,
+                            user_id.get() as i64,
+                        )
+                        .await
+                        {
+                            Ok(Some(_)) => true,
+                            Ok(None) => false,
+                            Err(e) => {
+                                error!("Failed to check mute in current channel: {:?}", e);
+                                false // Unmute on error to be safe
+                            }
+                        };
+
+                        if is_muted_in_current {
+                            debug!(
+                                "User {} is in channel {} where they're muted, keeping server mute",
+                                user_id, current_channel_id
+                            );
+                            // Don't remove the server mute - they're in a channel where they're muted
+                            // Don't clear any records - records are only cleared by owner unmute
+                            return;
+                        }
                     }
 
-                    // User has no global mute and no other channel mutes, so unmute them
-                    // Mark this as a bot-initiated unmute so we don't process it as a manual unmute
+                    // User is either not in any channel, or in a channel where they're NOT muted
+                    // Remove the Discord server mute so they can talk elsewhere
+                    // BUT DO NOT clear the mute record - that persists until owner unmutes them
                     data.mark_pending_unmute(guild_id.get(), user_id.get());
 
+                    // Remove the Discord server mute (but keep the database record!)
                     if let Err(e) =
                         mute_service::apply_server_mute(&http, guild_id, user_id, false).await
                     {

@@ -48,6 +48,49 @@ pub async fn vcban(
     Ok(())
 }
 
+/// Unban a user from your voice channel
+#[poise::command(slash_command, guild_only)]
+pub async fn vcunban(
+    ctx: Context<'_>,
+    #[description = "User to unban"] user: User,
+) -> Result<(), Error> {
+    let guild_id = ctx.guild_id().ok_or(Error::custom("Not in a guild"))?;
+    let author_id = ctx.author().id;
+
+    // Find the channel the author owns
+    let channel_id = find_owned_channel(ctx, guild_id.get(), author_id.get()).await?;
+
+    // Perform the unban
+    let unbanned = ban_service::unban_user(
+        ctx.serenity_context(),
+        ctx.data(),
+        channel_id,
+        user.id,
+    )
+    .await?;
+
+    let embed = if unbanned {
+        embeds::success_embed()
+            .title("User Unbanned")
+            .description(format!(
+                "<@{}> has been unbanned from your voice channel.",
+                user.id
+            ))
+    } else {
+        embeds::error_embed()
+            .title("Not Banned")
+            .description(format!(
+                "<@{}> was not banned from this channel.",
+                user.id
+            ))
+    };
+
+    ctx.send(poise::CreateReply::default().embed(embed).ephemeral(true))
+        .await?;
+
+    Ok(())
+}
+
 /// Find a channel owned by the user
 async fn find_owned_channel(
     ctx: Context<'_>,

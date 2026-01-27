@@ -98,3 +98,49 @@ pub async fn is_banned(
 
     Ok(banned)
 }
+
+/// Unban a user from a voice channel
+pub async fn unban_user(
+    ctx: &Context,
+    data: &Arc<Data>,
+    channel_id: ChannelId,
+    user_id: UserId,
+) -> Result<bool, Error> {
+    // Check if user is actually banned
+    let was_banned = ban::is_banned(&data.pool, channel_id.get() as i64, user_id.get() as i64).await?;
+
+    if !was_banned {
+        return Ok(false);
+    }
+
+    // Remove permission overwrite for the user
+    remove_channel_ban(ctx, channel_id, user_id).await?;
+
+    // Remove from database
+    ban::remove_ban(&data.pool, channel_id.get() as i64, user_id.get() as i64).await?;
+
+    info!(
+        "User {} unbanned from channel {}",
+        user_id, channel_id
+    );
+
+    Ok(true)
+}
+
+/// Remove a channel permission deny for a banned user
+async fn remove_channel_ban(
+    ctx: &Context,
+    channel_id: ChannelId,
+    user_id: UserId,
+) -> Result<(), Error> {
+    channel_id
+        .delete_permission(ctx, PermissionOverwriteType::Member(user_id))
+        .await?;
+
+    debug!(
+        "Removed ban permission for user {} on channel {}",
+        user_id, channel_id
+    );
+
+    Ok(())
+}

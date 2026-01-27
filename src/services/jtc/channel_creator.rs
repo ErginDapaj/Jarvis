@@ -4,7 +4,7 @@ use chrono::Utc;
 use serenity::all::{
     ChannelId, ChannelType as SerenityChannelType, Context, CreateChannel,
     EditChannel, EditMember, GuildId, PermissionOverwrite, PermissionOverwriteType, Permissions,
-    UserId,
+    UserId, VideoQualityMode,
 };
 use tracing::{debug, error, info};
 
@@ -109,19 +109,21 @@ pub async fn create_channel(
         format!("Debate VC")
     };
 
-    // Create the voice channel
+    // Create the voice channel with highest quality settings
+    // Bitrate: 96kbps (universal max - higher requires server boosts)
+    // Video quality: Full 720p
     let channel = guild_id
         .create_channel(
             ctx,
             CreateChannel::new(&channel_name)
                 .kind(SerenityChannelType::Voice)
                 .category(ChannelId::new(category_id as u64))
+                .bitrate(96_000) // 96kbps - max for all servers
+                .video_quality_mode(VideoQualityMode::Full) // 720p video
                 .permissions(vec![
-                    // Owner can manage the channel
+                    // Owner can only mute members
                     PermissionOverwrite {
-                        allow: Permissions::MANAGE_CHANNELS
-                            | Permissions::MUTE_MEMBERS
-                            | Permissions::MOVE_MEMBERS,
+                        allow: Permissions::MUTE_MEMBERS,
                         deny: Permissions::empty(),
                         kind: PermissionOverwriteType::Member(user_id),
                     },

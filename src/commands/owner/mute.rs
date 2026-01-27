@@ -5,7 +5,6 @@ use crate::bot::error::Error;
 use crate::constants::embeds;
 use crate::db::queries::voice_channel;
 use crate::services::moderation::mute_service;
-use crate::utils::permissions;
 
 /// Mute a user in your voice channel
 #[poise::command(slash_command, guild_only)]
@@ -19,8 +18,10 @@ pub async fn mute(
     // Find the channel the author is in and owns
     let channel_id = find_owned_channel(ctx, guild_id.get(), author_id.get()).await?;
 
-    // Check if the author is an admin (for is_admin_mute flag)
-    let is_admin = permissions::is_admin(ctx.serenity_context(), guild_id, author_id).await;
+    // Room owner mutes are always local (not admin) - they auto-unmute when user leaves
+    // This is intentional: even if the owner has admin perms, using /mute in their own
+    // channel should create a local mute, not a permanent admin mute
+    let is_admin_mute = false;
 
     // Perform the mute
     mute_service::mute_user(
@@ -30,7 +31,7 @@ pub async fn mute(
         channel_id,
         user.id,
         author_id,
-        is_admin,
+        is_admin_mute,
     )
     .await?;
 

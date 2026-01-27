@@ -22,6 +22,7 @@ pub async fn run(settings: Settings, pool: PgPool) -> Result<(), Error> {
                 commands::owner::mute::mute(),
                 commands::owner::mute::unmute(),
                 commands::owner::ban::vcban(),
+                commands::owner::ban::vcunban(),
                 commands::owner::transfer::transfer(),
                 commands::owner::rename::rename(),
                 commands::owner::retag::retag(),
