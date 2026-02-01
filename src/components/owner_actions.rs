@@ -89,6 +89,24 @@ pub async fn handle_selection(
         return Ok(());
     }
 
+    // Verify the target user is actually in this channel
+    let target_in_channel = ctx.cache.guild(guild_id).map(|guild| {
+        guild.voice_states.get(&selected_user_id)
+            .and_then(|vs| vs.channel_id)
+            .map(|cid| cid.get() == channel_id)
+            .unwrap_or(false)
+    }).unwrap_or(false);
+
+    if !target_in_channel {
+        send_component_error(
+            ctx,
+            component,
+            "That user isn't even in your channel dumbass.",
+        )
+        .await?;
+        return Ok(());
+    }
+
     // Route to appropriate handler
     match action {
         "mute" => handle_mute(ctx, data, component, guild_id, channel_id, owner_id, selected_user_id).await,
