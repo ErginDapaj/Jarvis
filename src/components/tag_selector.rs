@@ -69,6 +69,25 @@ pub async fn handle_selection(
         }
     };
 
+    // Verify the user is the channel owner
+    let owner_id = match data.get_channel_owner(channel_id) {
+        Some(id) => id,
+        None => {
+            send_component_error(ctx, component, "This channel is not managed by the bot").await?;
+            return Ok(());
+        }
+    };
+
+    if component.user.id.get() != owner_id {
+        send_component_error(
+            ctx,
+            component,
+            "Nice try. You don't own this channel — go touch grass instead of messing with other people's rooms.",
+        )
+        .await?;
+        return Ok(());
+    }
+
     // Extract selected tags
     let selected_tags: Vec<String> = match &component.data.kind {
         ComponentInteractionDataKind::StringSelect { values } => {

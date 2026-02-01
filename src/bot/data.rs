@@ -20,6 +20,8 @@ pub struct Data {
     /// Track pending bot unmutes: (guild_id, user_id) -> timestamp
     /// Used to distinguish bot unmutes from manual owner unmutes
     pub pending_bot_unmutes: DashMap<(u64, u64), std::time::Instant>,
+    /// Rate limit tracker for user limit changes: (user_id, channel_id) -> timestamps
+    pub limit_change_timestamps: DashMap<(u64, u64), Vec<std::time::Instant>>,
 }
 
 impl Data {
@@ -31,6 +33,7 @@ impl Data {
             activity_tracker: ActivityTracker::new(),
             jtc_pending: DashMap::new(),
             pending_bot_unmutes: DashMap::new(),
+            limit_change_timestamps: DashMap::new(),
         }
     }
 

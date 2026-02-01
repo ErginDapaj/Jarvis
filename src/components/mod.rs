@@ -1,4 +1,5 @@
 pub mod ban_selector;
+pub mod limit_selector;
 pub mod naming_prompt;
 pub mod owner_actions;
 pub mod spam_prompt;

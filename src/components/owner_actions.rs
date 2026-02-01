@@ -55,7 +55,7 @@ pub async fn handle_selection(
     };
 
     if component.user.id.get() != owner_id {
-        send_component_error(ctx, component, "Only the channel owner can use these controls").await?;
+        send_component_error(ctx, component, "Whoa there, you don't own this channel. Did you really think you could server mute people in someone else's room? Embarrassing.").await?;
         return Ok(());
     }
 

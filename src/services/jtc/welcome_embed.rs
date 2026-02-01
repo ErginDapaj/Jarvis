@@ -84,6 +84,11 @@ pub async fn send(
         .style(ButtonStyle::Secondary);
     buttons.push(reconfigure_button);
 
+    let limit_button = CreateButton::new(format!("limit_btn_{}", channel_id))
+        .label("Set Join Limit")
+        .style(ButtonStyle::Secondary);
+    buttons.push(limit_button);
+
     if let Some(ref donate_link) = data.settings.donate_link {
         let donate_button = CreateButton::new_link(donate_link)
             .label("❤️ Support Us");

@@ -8,7 +8,7 @@ use tracing::{debug, error};
 
 use crate::bot::data::Data;
 use crate::bot::error::Error;
-use crate::components::{ban_selector, naming_prompt, owner_actions, spam_prompt, tag_selector, topic_modal};
+use crate::components::{ban_selector, limit_selector, naming_prompt, owner_actions, spam_prompt, tag_selector, topic_modal};
 use crate::constants::embeds;
 
 pub async fn handle_interaction(
@@ -55,6 +55,8 @@ async fn handle_component(
         naming_prompt::handle_configure_button(ctx, data, component).await
     } else if custom_id.starts_with("reconfigure_") {
         naming_prompt::handle_reconfigure_button(ctx, data, component).await
+    } else if custom_id.starts_with("limit_btn_") {
+        limit_selector::handle_button(ctx, data, component).await
     } else if custom_id.starts_with("vc_") {
         owner_actions::handle_selection(ctx, data, component).await
     } else {
@@ -85,6 +87,8 @@ async fn handle_modal(
         topic_modal::handle_submission(ctx, data, modal).await?;
     } else if custom_id.starts_with("naming_modal_") {
         naming_prompt::handle_naming_modal(ctx, data, modal).await?;
+    } else if custom_id.starts_with("limit_modal_") {
+        limit_selector::handle_modal(ctx, data, modal).await?;
     }
 
     Ok(())

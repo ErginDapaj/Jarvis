@@ -92,7 +92,7 @@ pub async fn handle_selection(
     };
 
     if component.user.id.get() != owner_id {
-        send_component_error(ctx, component, "Only the channel owner can ban users").await?;
+        send_component_error(ctx, component, "This isn't your channel, buddy. Trying to ban people from rooms you don't own is a bold strategy — too bad it doesn't work.").await?;
         return Ok(());
     }
 
